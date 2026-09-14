@@ -9,7 +9,7 @@ abstract: Jiggle is a desktop application that runs OpenMM molecular dynamics si
 authors:
 - family-names: Safeer
   given-names: Amman
-  orcid: https://orcid.org/0000-0000-0000-0000
+  orcid: https://orcid.org/0009-0001-7398-6697
 type: software
 license: MIT
 repository-code: https://github.com/BioCoder007/JIGGLE
