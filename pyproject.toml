@@ -1,0 +1,15 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+exclude = ["ui/vendor"]
+
+[tool.ruff.lint]
+# Explicit rule set. Without this, ruff's defaults shift between releases
+# and CI can fail on untouched code.
+select = ["E", "F", "W", "I", "UP", "B", "C4", "RUF"]
+ignore = [
+    "E501",    # long lines are allowed; several explanatory comments need them
+    "RUF001",  # en/em dashes and × are used intentionally in log messages
+    "RUF002",
+    "RUF003",
+]

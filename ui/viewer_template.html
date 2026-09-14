@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- 3DMOL_JS_INJECT: main_window.py replaces this comment with the full
+     contents of vendor/3Dmol-min.js, inlined, so there is zero external
+     or local-file resource loading for QWebEngineView to block. -->
+<style>
+  html, body, #viewport { width: 100%; height: 100%; margin: 0; padding: 0; background: #0e0f13; }
+</style>
+</head>
+<body>
+<div id="viewport"></div>
+<script>
+  // Route any JS error straight to the page title, which Python polls via
+  // titleChanged — this is how we surface silent failures (e.g. 3Dmol
+  // failing to load) instead of a black screen with no explanation.
+  window.onerror = function(msg, src, line, col, err) {
+    document.title = "JSERROR::" + msg + " (line " + line + ")";
+  };
+
+  if (typeof $3Dmol === "undefined") {
+    document.title = "JSERROR::3Dmol library did not load (vendor/3Dmol-min.js missing or blocked)";
+  }
+
+  let viewer = $3Dmol.createViewer("viewport", { backgroundColor: "#0e0f13" });
+  let model = null;
+  let initialized = false;
+
+  // Called once with a full PDB block to build the initial model + style.
+  // receptorColor / binderColor are hex strings like "#7fc8f8".
+  //
+  // IMPORTANT FIX: previously only receptor/binder chains got styled via
+  // setStyle({chain: ch}, {cartoon: ...}) — any atom whose chain ID didn't
+  // exactly match (e.g. because PDBFixer relabeled/renumbered chains, or
+  // the receptor spans chains the user didn't list) silently fell back to
+  // 3Dmol's default line/wireframe style, which is exactly the "receptor
+  // is wireframe, binder is cartoon" bug reported. Fix: apply cartoon to
+  // EVERY atom first as a neutral baseline, then layer receptor/binder
+  // colors on top by chain. Nothing can be left unstyled anymore.
+  function loadInitialStructure(pdbData, receptorChains, binderChains, receptorColor, binderColor) {
+    try {
+      viewer.clear();
+      // keepH:true is MANDATORY, not cosmetic. 3Dmol's PDB parser computes
+      //     const stripH = !options.keepH
+      // and then does `if (elem === "H" && stripH) continue;` for every atom.
+      // With no options object, keepH is undefined -> stripH is true -> EVERY
+      // hydrogen is silently discarded at parse time. The simulation structure
+      // is hydrogenated by PDBFixer, so the model ends up holding only the
+      // heavy atoms while OpenMM keeps sending coordinates for all of them.
+      // That single mismatch is the whole "tangled structure" bug: before the
+      // atom-count check existed, updateCoords wrote the first N*3 values of a
+      // hydrogenated coordinate array into N heavy atoms, so N/H/CA/CB/C/O each
+      // received some other atom's position and the backbone scrambled.
+      model = viewer.addModel(pdbData, "pdb", { keepH: true });
+
+      const allChains = new Set();
+      model.selectedAtoms({}).forEach(function(a) { allChains.add(a.chain); });
+
+      // Baseline: cartoon everywhere, neutral gray, so nothing renders as
+      // wireframe even if a chain isn't explicitly receptor or binder.
+      viewer.setStyle({}, { cartoon: { color: "#9aa0a6" } });
+
+      receptorChains.forEach(function(ch) {
+        viewer.setStyle({ chain: ch }, { cartoon: { color: receptorColor } });
+      });
+      binderChains.forEach(function(ch) {
+        viewer.setStyle({ chain: ch }, { cartoon: { color: binderColor } });
+      });
+
+      viewer.zoomTo();
+      viewer.render();
+      initialized = true;
+
+      const unmatched = [...allChains].filter(
+        c => !receptorChains.includes(c) && !binderChains.includes(c)
+      );
+      const nH = model.atoms.filter(function(a) { return a.elem === "H"; }).length;
+      const nAtomLines = (pdbData.match(/^(ATOM  |HETATM)/gm) || []).length;
+      document.title = "READY::atoms=" + model.atoms.length +
+        ";H=" + nH +
+        ";pdbAtomLines=" + nAtomLines +
+        (model.atoms.length !== nAtomLines
+          ? ";PARSER_DROPPED=" + (nAtomLines - model.atoms.length)
+          : "") +
+        ";chains=" + [...allChains].join(",") +
+        (unmatched.length ? ";unmatched=" + unmatched.join(",") : "");
+    } catch (e) {
+      document.title = "JSERROR::loadInitialStructure failed: " + e.message;
+    }
+  }
+
+  // Called every reporting frame with a flat [x1,y1,z1,x2,y2,z2,...] array
+  // in Angstrom, in the same atom order as the initial PDB.
+  //
+  // REVISED APPROACH: previously used model.setCoordinates(data, "array"),
+  // which internally clones every atom object into a new array each call
+  // (via 3Dmol's "frames" trajectory machinery) rather than mutating the
+  // existing atoms in place. That was functionally correct as far as I
+  // could verify from the library source (bonds/ss references are carried
+  // over to the clones), but it's unnecessary indirection for a use case
+  // that never needs multi-frame trajectory playback — we only ever have
+  // one "current" frame. Switched to direct mutation of the existing
+  // model.atoms array (confirmed to be a plain, directly-mutable public
+  // property, not hidden behind a getter) for a simpler, more predictable
+  // update path with one less layer that could go wrong. Also added an
+  // explicit atom-count check: previously a count mismatch would have
+  // surfaced as a confusing downstream error (or silently misassigned
+  // coordinates to the wrong atoms); now it fails loudly and immediately
+  // with the actual counts, which is the real diagnostic needed if the
+  // OpenMM atom order and the 3Dmol-parsed atom order were ever to
+  // disagree.
+  function updateCoords(flatCoordsAngstrom) {
+    if (!initialized || !model) {
+      document.title = "JSERROR::updateCoords called before structure was loaded";
+      return;
+    }
+    try {
+      const atoms = model.atoms;
+      const expected = atoms.length * 3;
+      if (flatCoordsAngstrom.length !== expected) {
+        throw new Error(
+          "Coordinate count mismatch: got " + flatCoordsAngstrom.length +
+          " values for " + atoms.length + " atoms (expected " + expected +
+          "). The viewer's atom list and OpenMM's have diverged — do not " +
+          "trust the displayed structure. Most likely cause: the model was " +
+          "parsed without {keepH:true}, so 3Dmol dropped every hydrogen."
+        );
+      }
+      for (let i = 0; i < atoms.length; i++) {
+        const j = i * 3;
+        atoms[i].x = flatCoordsAngstrom[j];
+        atoms[i].y = flatCoordsAngstrom[j + 1];
+        atoms[i].z = flatCoordsAngstrom[j + 2];
+      }
+      // In 3Dmol 2.5.5 `molObj` is a real public field on GLModel, and
+      // GLModel.globj() rebuilds when it is null:
+      //     globj(group, exts) { (null === this.molObj || exts.regen) && ... }
+      // So nulling it is sufficient. Do NOT pass {regen:true} to render():
+      // the second parameter of GLViewer.render(callback, exts) is the WebGL
+      // capability object, and render() only falls back to
+      // renderer.supportedExtensions() when it is omitted. Passing {regen:true}
+      // hands createMolObj an object with supportsImposters/supportsAIA
+      // undefined, silently disabling the accelerated geometry paths.
+      model.molObj = null;
+      viewer.render();
+    } catch (e) {
+      document.title = "JSERROR::updateCoords failed: " + e.message;
+    }
+  }
+</script>
+</body>
+</html>

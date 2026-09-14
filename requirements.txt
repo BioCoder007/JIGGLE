@@ -1,0 +1,6 @@
+PySide6>=6.6
+PySide6-Addons>=6.6
+openmm>=8.1
+pdbfixer>=1.9
+numpy>=1.24
+pyqtgraph>=0.13
