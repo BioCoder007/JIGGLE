@@ -1,0 +1,127 @@
+cff-version: 1.2.0
+message: If you use Jiggle in your research, please cite it as below, together with OpenMM.
+title: 'Jiggle: a live molecular dynamics viewer'
+abstract: Jiggle is a desktop application that runs OpenMM molecular dynamics simulations and renders
+  the structure in real time rather than replaying a finished trajectory. It reports live RMSD, per-residue
+  RMSF, potential energy, radius of gyration and receptor-binder interface distance. For two-body systems
+  RMSD is decomposed four ways, including a binder RMSD computed after superposition on the receptor,
+  which isolates pose drift from global motion and from the binder's own internal rearrangement.
+authors:
+- family-names: Safeer
+  given-names: Amman
+  orcid: https://orcid.org/0000-0000-0000-0000
+type: software
+license: MIT
+repository-code: https://github.com/BioCoder007/JIGGLE
+url: https://github.com/BioCoder007/JIGGLE
+version: 0.1.0
+date-released: '2026-09-14'
+keywords:
+- molecular dynamics
+- OpenMM
+- structural biology
+- protein design
+- protein-protein interaction
+- trajectory analysis
+- scientific visualization
+references:
+- type: article
+  title: 'OpenMM 7: Rapid development of high performance algorithms for molecular dynamics'
+  authors:
+  - family-names: Eastman
+    given-names: Peter
+  - family-names: Swails
+    given-names: Jason
+  - family-names: Chodera
+    given-names: John D.
+  - family-names: McGibbon
+    given-names: Robert T.
+  - family-names: Zhao
+    given-names: Yutong
+  - family-names: Beauchamp
+    given-names: Kyle A.
+  - family-names: Wang
+    given-names: Lee-Ping
+  - family-names: Simmonett
+    given-names: Andrew C.
+  - family-names: Harrigan
+    given-names: Matthew P.
+  - family-names: Stern
+    given-names: Chaya D.
+  - family-names: Wiewiora
+    given-names: Rafal P.
+  - family-names: Brooks
+    given-names: Bernard R.
+  - family-names: Pande
+    given-names: Vijay S.
+  journal: PLOS Computational Biology
+  volume: 13
+  issue: 7
+  start: e1005659
+  year: 2017
+  doi: 10.1371/journal.pcbi.1005659
+- type: article
+  title: '3Dmol.js: molecular visualization with WebGL'
+  authors:
+  - family-names: Rego
+    given-names: Nicholas
+  - family-names: Koes
+    given-names: David
+  journal: Bioinformatics
+  volume: 31
+  issue: 8
+  start: 1322
+  end: 1324
+  year: 2015
+  doi: 10.1093/bioinformatics/btu829
+- type: article
+  title: 'ff14SB: Improving the Accuracy of Protein Side Chain and Backbone Parameters from ff99SB'
+  authors:
+  - family-names: Maier
+    given-names: James A.
+  - family-names: Martinez
+    given-names: Carmenza
+  - family-names: Kasavajhala
+    given-names: Koushik
+  - family-names: Wickstrom
+    given-names: Lauren
+  - family-names: Hauser
+    given-names: Kevin E.
+  - family-names: Simmerling
+    given-names: Carlos
+  journal: Journal of Chemical Theory and Computation
+  volume: 11
+  issue: 8
+  start: 3696
+  end: 3713
+  year: 2015
+  doi: 10.1021/acs.jctc.5b00255
+- type: article
+  title: Exploring protein native states and large-scale conformational changes with a modified generalized
+    Born model
+  authors:
+  - family-names: Onufriev
+    given-names: Alexey
+  - family-names: Bashford
+    given-names: Donald
+  - family-names: Case
+    given-names: David A.
+  journal: 'Proteins: Structure, Function, and Bioinformatics'
+  volume: 55
+  issue: 2
+  start: 383
+  end: 394
+  year: 2004
+  doi: 10.1002/prot.20033
+- type: article
+  title: A solution for the best rotation to relate two sets of vectors
+  authors:
+  - family-names: Kabsch
+    given-names: Wolfgang
+  journal: Acta Crystallographica Section A
+  volume: 32
+  issue: 5
+  start: 922
+  end: 923
+  year: 1976
+  doi: 10.1107/S0567739476001873
