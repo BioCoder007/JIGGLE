@@ -19,9 +19,7 @@ Thumbs.db
 
 # Simulation outputs
 md_output/
-*.dcd
 *.chk
-*.log
 
 # Qt
 *.pyc
