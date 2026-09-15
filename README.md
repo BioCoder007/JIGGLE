@@ -16,6 +16,14 @@ thing in a 3D viewer with live plots updating beside it.
 
 ## Install
 
+a) Clone the GitHub repository
+
+```bash
+git clone https://github.com/BioCoder007/JIGGLE.git
+cd JIGGLE
+```
+b) Create the conda environment
+
 ```bash
 conda create -n jiggle python=3.11 -y
 conda activate jiggle
@@ -23,8 +31,10 @@ conda install -c conda-forge openmm pdbfixer -y
 pip install -r requirements.txt
 ```
 
-Install OpenMM through conda-forge rather than pip — the pip wheels are
-unreliable for CUDA. Check what platforms you actually have:
+⚠️ `Install OpenMM through conda-forge rather than pip — the pip wheels are
+unreliable for CUDA`. 
+
+c) Check what platforms you actually have:
 
 ```bash
 python -m openmm.testInstallation
